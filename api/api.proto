@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+option go_package = "clarum";
+
+message Instrument {
+	string id = 1;
+	string type = 2;
+	int32 issued_at = 3;
+	Lineage lineage = 4;	
+}
+
+message Lineage {
+	string id = 1;
+	repeated Action actions = 2;
+}
+
+message Action {
+	string id = 1;
+	int32 at = 2;
+	enum Type {
+		CREATION = 0;
+		TRANSPORT = 1;
+		USE = 2;
+		MAINTENANCE = 3;
+		ADMIN = 4;
+		DISPOSAL = 5; 
+		OTHER = 6;
+	}
+	Type type = 3;
+	Event event = 4;
+	string description = 5; 
+}
+
+message Person {
+	string id = 1;
+	string last_name = 2;
+	string first_name = 3;
+}
+
+message Role {
+	string id = 1;
+	string role = 2;
+	string description =3;
+}
+
+message Party {
+	Person person = 1;
+	Role role = 2;
+}
+
+message Event {
+	string id = 1;
+	string description = 2;
+	repeated Party parties = 3;
+}
+
+message Empty {}
+
+service InstrumentService {
+	rpc CreateInstrument(CreateInstrumentRequest) returns (Instrument) {}
+	rpc GetInstrument(GetInstrumentRequest) returns (Instrument) {}
+	rpc ListInstruments(ListInstrumentsRequest) returns (ListInstrumentsResponse) {}
+	rpc DeleteInstrument(DeleteInstrumentRequest) returns (Empty) {}
+	rpc UpdateInstrument(UpdateInstrumentRequest) returns (Instrument) {}
+}
+
+message CreateInstrumentRequest {
+	Instrument instrument = 1;
+}	
+
+message GetInstrumentRequest {
+	string id = 1;
+}
+
+message ListInstrumentsRequest {
+	repeated string ids = 1;
+}
+
+message ListInstrumentsResponse {
+	repeated Instrument instruments = 1;
+}
+
+message DeleteInstrumentRequest {
+	string id = 1;
+}
+
+message UpdateInstrumentRequest {
+	string id = 1;
+	Instrument instrument = 2;
+}
+
+
