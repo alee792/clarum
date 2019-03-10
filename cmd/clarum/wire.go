@@ -1,3 +1,4 @@
+//go:generate wire
 //+build wireinject
 
 package main
@@ -10,36 +11,38 @@ import (
 	"go.uber.org/zap"
 )
 
-// Config for Resolver.
 type Config struct {
-	Bolt struct{ 
-		Path string
-		Opts bbolt.Options
+	Bolt struct {
+		Path   string
+		Bucket []byte
+		Opts   *bbolt.Options
 	}
-}  
- 
-// Resovler of dependencies.
-type Resolver struct { 
-	bolt *bbolt.DB
-}   
-
-func provideBolt() (*bbolt.DB, err)  {
-	if r.bolt == nil {
-		db ,err := bbolt.Open(r.Config.Bolt.Path, 0600, r.Config.Bolt.Opts)
-		if err != nil {
-			return nil, err
-		} 
-		r.bolt = db  
-	} 
-	return r.bolt, nil
 }
 
-func initClarum() *clarum.Server {
+var BoltSet = wire.NewSet(
+	ProvideBolt,
+	bolt.NewRepo,
+	wire.Bind((*clarum.Repo)(nil), (*bolt.Repo)(nil)),
+)
+
+func ProvideBolt(cfg Config) (*bbolt.DB, error) {
+	db, err := bbolt.Open(cfg.Bolt.Path, 0600, cfg.Bolt.Opts)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func ProvideLogger(cfg Config) (*zap.SugaredLogger, error) {
+	return zap.NewExample().Sugar(), nil
+}
+
+func InitClarum(cfg Config) (*clarum.Server, error) {
 	wire.Build(
-		zap.NewDevelopment,
-		bolt.NewRepo,
-		wire.Bind((*clarum.Repo)(nil), (*bolt.Repo)(nil)),
+		ProvideLogger,
+		BoltSet,
 		clarum.NewServer,
+		wire.FieldsOf(cfg, "Bolt.Bucket"),
 	)
-	return &clarum.Server{}
+	return &clarum.Server{}, nil
 }

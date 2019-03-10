@@ -8,11 +8,6 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-// Config for Repo.
-type Config struct {
-	BoltFilePath string
-}
-
 // Repo stores Clarum data using BoltDB.
 type Repo struct {
 	db     *bolt.DB
