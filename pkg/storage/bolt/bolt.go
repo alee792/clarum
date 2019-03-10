@@ -15,8 +15,16 @@ type Config struct {
 
 // Repo stores Clarum data using BoltDB.
 type Repo struct {
-	db     bolt.DB
+	db     *bolt.DB
 	bucket []byte
+}
+
+// NewRepo returns a Clarum Repo implemented in Bolt.
+func NewRepo(db *bolt.DB, bucket []byte) *Repo {
+	return &Repo{
+		db:     db,
+		bucket: bucket,
+	}
 }
 
 // CreateInstrument to begin tracking lineage.
