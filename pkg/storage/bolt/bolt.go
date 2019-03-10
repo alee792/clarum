@@ -8,18 +8,30 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+// Config for Repo.
+type Config struct {
+	Path   string
+	Bucket []byte
+	Opts   *bolt.Options
+}
+
 // Repo stores Clarum data using BoltDB.
 type Repo struct {
 	db     *bolt.DB
 	bucket []byte
+	Config Config
 }
 
 // NewRepo returns a Clarum Repo implemented in Bolt.
-func NewRepo(db *bolt.DB, bucket []byte) *Repo {
+func NewRepo(cfg *Config) (*Repo, error) {
+	db, err := bolt.Open(cfg.Path, 0600, cfg.Opts)
+	if err != nil {
+		return nil, err
+	}
 	return &Repo{
 		db:     db,
-		bucket: bucket,
-	}
+		bucket: cfg.Bucket,
+	}, nil
 }
 
 // CreateInstrument to begin tracking lineage.
