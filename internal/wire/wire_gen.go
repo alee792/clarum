@@ -14,6 +14,15 @@ import (
 
 // Injectors from wire.go:
 
+func InitBolt(config Config) (*bolt.Repo, error) {
+	boltConfig := config.Bolt
+	repo, err := bolt.NewRepo(boltConfig)
+	if err != nil {
+		return nil, err
+	}
+	return repo, nil
+}
+
 func InitClarum(config Config) (*clarum.Server, error) {
 	boltConfig := config.Bolt
 	repo, err := bolt.NewRepo(boltConfig)

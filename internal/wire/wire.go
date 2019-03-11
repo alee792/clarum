@@ -24,6 +24,11 @@ func ProvideLogger(cfg Config) (*zap.SugaredLogger, error) {
 	return zap.NewExample().Sugar(), nil
 }
 
+func InitBolt(Config) (*bolt.Repo, error) {
+	wire.Build(BoltSet)
+	return nil, nil
+}
+
 func InitClarum(Config) (*clarum.Server, error) {
 	wire.Build(
 		clarum.NewServer,

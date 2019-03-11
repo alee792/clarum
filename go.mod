@@ -4,8 +4,9 @@ go 1.12
 
 require (
 	github.com/golang/protobuf v1.3.0
+	github.com/google/go-cmp v0.2.0
 	github.com/google/wire v0.2.2-0.20190307001950-aeaafca1a604
-	github.com/pkg/errors v0.8.1 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.3.0 // indirect
 	go.etcd.io/bbolt v1.3.2
 	go.uber.org/atomic v1.3.2 // indirect

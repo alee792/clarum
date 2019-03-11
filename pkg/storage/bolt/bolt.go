@@ -17,7 +17,7 @@ type Config struct {
 
 // Repo stores Clarum data using BoltDB.
 type Repo struct {
-	db     *bolt.DB
+	DB     *bolt.DB
 	bucket []byte
 	Config Config
 }
@@ -29,7 +29,7 @@ func NewRepo(cfg *Config) (*Repo, error) {
 		return nil, err
 	}
 	return &Repo{
-		db:     db,
+		DB:     db,
 		bucket: cfg.Bucket,
 	}, nil
 }
@@ -41,13 +41,17 @@ func (r *Repo) CreateInstrument(ctx context.Context, in *pb.CreateInstrumentRequ
 
 // GetInstrument returns an instrument.
 func (r *Repo) GetInstrument(ctx context.Context, in *pb.GetInstrumentRequest) (*pb.Instrument, error) {
-	var inst *pb.Instrument
-	err := r.db.View(func(tx *bolt.Tx) error {
+	var raw []byte
+	err := r.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(r.bucket)
-		raw := b.Get([]byte(in.Id))
-		return proto.Unmarshal(raw, inst)
+		raw = b.Get([]byte(in.Id))
+		return nil
 	})
 	if err != nil {
+		return nil, err
+	}
+	inst := &pb.Instrument{}
+	if err := proto.Unmarshal(raw, inst); err != nil {
 		return nil, err
 	}
 	return inst, nil
@@ -56,7 +60,7 @@ func (r *Repo) GetInstrument(ctx context.Context, in *pb.GetInstrumentRequest) (
 // ListInstruments returns a list of instruments.
 func (r *Repo) ListInstruments(ctx context.Context, in *pb.ListInstrumentsRequest) (*pb.ListInstrumentsResponse, error) {
 	var insts []*pb.Instrument
-	err := r.db.View(func(tx *bolt.Tx) error {
+	err := r.DB.View(func(tx *bolt.Tx) error {
 		for _, id := range in.Ids {
 			b := tx.Bucket(r.bucket)
 			raw := b.Get([]byte(id))
@@ -76,9 +80,8 @@ func (r *Repo) ListInstruments(ctx context.Context, in *pb.ListInstrumentsReques
 
 // DeleteInstrument removes an instrument from a server.
 func (r *Repo) DeleteInstrument(ctx context.Context, in *pb.DeleteInstrumentRequest) (*pb.Empty, error) {
-	err := r.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(r.bucket)
-		return b.Delete([]byte(in.Id))
+	err := r.DB.Update(func(tx *bolt.Tx) error {
+		return tx.Bucket(r.bucket).Delete([]byte(in.Id))
 	})
 	if err != nil {
 		return nil, err
@@ -96,8 +99,11 @@ func (r *Repo) update(ctx context.Context, id string, inst *pb.Instrument) (*pb.
 	if err != nil {
 		return nil, err
 	}
-	err = r.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket(r.bucket)
+	err = r.DB.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists(r.bucket)
+		if err != nil {
+			return err
+		}
 		return b.Put([]byte(id), raw)
 	})
 	if err != nil {
